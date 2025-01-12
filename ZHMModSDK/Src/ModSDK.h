@@ -64,6 +64,7 @@ public:
     void OnModUnloaded(const std::string& p_Name);
     void OnDrawUI(bool p_HasFocus);
     void OnDraw3D();
+    void OnDepthDraw3D();
     void OnDrawMenu();
 
 public:

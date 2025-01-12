@@ -17,125 +17,22 @@ inline std::ostream& operator<<(std::ostream& p_Stream, const SViewport& p_Value
     return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ", " << p_Value.w << ", " << p_Value.h << ")";
 }
 
-class SVector2 {
-public:
-    SVector2() :
-        x(0.f), y(0.f) {}
-
-    SVector2(float p_X, float p_Y) :
-        x(p_X), y(p_Y) {}
-
-public:
-    float32 x; // 0x0
-    float32 y; // 0x4
-};
-
-inline std::ostream& operator<<(std::ostream& p_Stream, const SVector2& p_Value) {
-    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ")";
-}
-
-class SVector3 {
-public:
-    SVector3() :
-        x(0.f), y(0.f), z(0.f) {}
-
-    SVector3(float p_X, float p_Y, float p_Z) :
-        x(p_X), y(p_Y), z(p_Z) {}
-
-    SVector3(DirectX::XMVECTOR p_Vector) {
-        DirectX::XMStoreFloat3(reinterpret_cast<DirectX::XMFLOAT3*>(this), p_Vector);
-    }
-
-    SVector3 operator-(const SVector3& other) {
-        SVector3 result;
-
-        result.x = x - other.x;
-        result.y = y - other.y;
-        result.z = z - other.z;
-
-        return result;
-    }
-
-    float Length() const {
-        return sqrtf(x * x + y * y + z * z);
-    }
-
-public:
-    float32 x; // 0x0
-    float32 y; // 0x4
-    float32 z; // 0x8
-};
-
-inline std::ostream& operator<<(std::ostream& p_Stream, const SVector3& p_Value) {
-    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ", " << p_Value.z << ")";
-}
-
-class SVector4 {
-public:
-    SVector4() :
-        x(0.f), y(0.f), z(0.f), w(0.f) {}
-
-    SVector4(float p_X, float p_Y, float p_Z, float p_W) :
-        x(p_X), y(p_Y), z(p_Z), w(p_W) {}
-
-public:
-    float32 x; // 0x0
-    float32 y; // 0x4
-    float32 z; // 0x8
-    float32 w; // 0x10
-};
-
-inline std::ostream& operator<<(std::ostream& p_Stream, const SVector4& p_Value) {
-    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ", " << p_Value.z << ", " << p_Value.w << ")";
-}
-
-class SMatrix43 {
-public:
-    SMatrix43() :
-        XAxis(1.f, 0.f, 0.f),
-        YAxis(0.f, 1.f, 0.f),
-        ZAxis(0.f, 0.f, 1.f),
-        Trans(0.f, 0.f, 0.f) {}
-
-public:
-    SVector3 XAxis; // 0x0
-    SVector3 YAxis; // 0xC
-    SVector3 ZAxis; // 0x18
-    SVector3 Trans; // 0x24
-};
-
-class SMatrix44 {
-public:
-    float32 m11; // 0x0
-    float32 m12; // 0x4
-    float32 m13; // 0x8
-    float32 m14; // 0xC
-    float32 m21; // 0x10
-    float32 m22; // 0x14
-    float32 m23; // 0x18
-    float32 m24; // 0x1C
-    float32 m31; // 0x20
-    float32 m32; // 0x24
-    float32 m33; // 0x28
-    float32 m34; // 0x2C
-    float32 m41; // 0x30
-    float32 m42; // 0x34
-    float32 m43; // 0x38
-    float32 m44; // 0x3C
-};
-
 struct alignas(16) float4 {
     float4() :
-        m(_mm_setzero_ps()) {}
+        m(_mm_setzero_ps()) {
+    }
 
     float4(__m128 p_Value) :
-        m(p_Value) {}
+        m(p_Value) {
+    }
 
     float4(float p_X, float p_Y, float p_Z, float p_W) :
-        x(p_X), y(p_Y), z(p_Z), w(p_W) {}
+        x(p_X), y(p_Y), z(p_Z), w(p_W) {
+    }
 
     float4(float p_Val) :
-        x(p_Val), y(p_Val), z(p_Val), w(p_Val) {}
+        x(p_Val), y(p_Val), z(p_Val), w(p_Val) {
+    }
 
     float4 operator-(const float4& p_Vec) const {
         return _mm_sub_ps(m, p_Vec.m);
@@ -201,7 +98,7 @@ struct alignas(16) float4 {
     }
 
     inline static float Norm(const float4& p_Vec) {
-        return (float) sqrt(DotProduct(p_Vec, p_Vec));
+        return (float)sqrt(DotProduct(p_Vec, p_Vec));
     }
 
     inline static float Distance(const float4& p_From, const float4& p_To) {
@@ -222,6 +119,132 @@ struct alignas(16) float4 {
             float w;
         };
     };
+};
+
+class SVector2 {
+public:
+    SVector2() :
+        x(0.f), y(0.f) {}
+
+    SVector2(float p_X, float p_Y) :
+        x(p_X), y(p_Y) {}
+
+public:
+    float32 x; // 0x0
+    float32 y; // 0x4
+};
+
+inline std::ostream& operator<<(std::ostream& p_Stream, const SVector2& p_Value) {
+    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ")";
+}
+
+class SVector3 {
+public:
+    SVector3() :
+        x(0.f), y(0.f), z(0.f) {}
+
+    SVector3(float p_X, float p_Y, float p_Z) :
+        x(p_X), y(p_Y), z(p_Z) {}
+
+    SVector3(DirectX::XMVECTOR p_Vector) {
+        DirectX::XMStoreFloat3(reinterpret_cast<DirectX::XMFLOAT3*>(this), p_Vector);
+    }
+
+    SVector3 operator-(const SVector3& other) {
+        SVector3 result;
+
+        result.x = x - other.x;
+        result.y = y - other.y;
+        result.z = z - other.z;
+
+        return result;
+    }
+
+    const bool operator==(const SVector3& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    SVector3 operator*(const float value) const {
+        return SVector3(x * value, y * value, z * value);
+    }
+
+    SVector3 operator/(const SVector3& other) const {
+        return SVector3(x / other.x, y / other.y, z / other.z);
+    }
+
+    SVector3 operator/(const float other) const {
+        return SVector3(x / other, y / other, z / other);
+    }
+
+    float Length() const {
+        return sqrtf(x * x + y * y + z * z);
+    }
+
+public:
+    float32 x; // 0x0
+    float32 y; // 0x4
+    float32 z; // 0x8
+};
+
+inline std::ostream& operator<<(std::ostream& p_Stream, const SVector3& p_Value) {
+    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ", " << p_Value.z << ")";
+}
+
+class SVector4 {
+public:
+    SVector4() :
+        x(0.f), y(0.f), z(0.f), w(0.f) {}
+
+    SVector4(float p_X, float p_Y, float p_Z, float p_W) :
+        x(p_X), y(p_Y), z(p_Z), w(p_W) {}
+
+    SVector4(const float4& vector) :
+        x(vector.x), y(vector.y), z(vector.z), w(vector.w) {}
+
+public:
+    float32 x; // 0x0
+    float32 y; // 0x4
+    float32 z; // 0x8
+    float32 w; // 0x10
+};
+
+inline std::ostream& operator<<(std::ostream& p_Stream, const SVector4& p_Value) {
+    return p_Stream << "(" << p_Value.x << ", " << p_Value.y << ", " << p_Value.z << ", " << p_Value.w << ")";
+}
+
+class SMatrix43 {
+public:
+    SMatrix43() :
+        XAxis(1.f, 0.f, 0.f),
+        YAxis(0.f, 1.f, 0.f),
+        ZAxis(0.f, 0.f, 1.f),
+        Trans(0.f, 0.f, 0.f) {}
+
+public:
+    SVector3 XAxis; // 0x0
+    SVector3 YAxis; // 0xC
+    SVector3 ZAxis; // 0x18
+    SVector3 Trans; // 0x24
+};
+
+class SMatrix44 {
+public:
+    float32 m11; // 0x0
+    float32 m12; // 0x4
+    float32 m13; // 0x8
+    float32 m14; // 0xC
+    float32 m21; // 0x10
+    float32 m22; // 0x14
+    float32 m23; // 0x18
+    float32 m24; // 0x1C
+    float32 m31; // 0x20
+    float32 m32; // 0x24
+    float32 m33; // 0x28
+    float32 m34; // 0x2C
+    float32 m41; // 0x30
+    float32 m42; // 0x34
+    float32 m43; // 0x38
+    float32 m44; // 0x3C
 };
 
 struct SQuaternion {
@@ -424,6 +447,29 @@ struct alignas(16) SMatrix {
         s_Matrix.ZAxis = {ZAxis.x, ZAxis.y, ZAxis.z};
         s_Matrix.Trans = {Trans.x, Trans.y, Trans.z};
         return s_Matrix;
+    }
+
+    static SMatrix ScaleTranslate(const float4& vScale, const float4& vTranslate) {
+        return SMatrix(
+            float4(vScale.x, 0.f, 0.f, 0.f),
+            float4(0.f, vScale.y, 0.f, 0.f),
+            float4(0.f, 0.f, vScale.z, 0.f),
+            float4(vTranslate.x, vTranslate.y, vTranslate.z, 1.f));
+    }
+
+    SMatrix AffineMultiply(const SMatrix& other) const {
+        SMatrix result;
+
+        result.mat[0] = mat[0] * other.mat[0].x + mat[1] * other.mat[0].y + mat[2] * other.mat[0].z;
+        result.mat[1] = mat[0] * other.mat[1].x + mat[1] * other.mat[1].y + mat[2] * other.mat[1].z;
+        result.mat[2] = mat[0] * other.mat[2].x + mat[1] * other.mat[2].y + mat[2] * other.mat[2].z;
+        result.mat[3] = mat[0] * other.mat[3].x + mat[1] * other.mat[3].y + mat[2] * other.mat[3].z + mat[3];
+
+        return result;
+    }
+
+    float4 WVectorTransform(const float4& vOper) const {
+        return mat[0] * vOper.x + mat[1] * vOper.y + mat[2] * vOper.z + mat[3];
     }
 
     union {

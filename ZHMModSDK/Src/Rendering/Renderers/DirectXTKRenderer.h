@@ -16,6 +16,7 @@
 #include "IRenderer.h"
 #include "SpriteFont.h"
 #include "D3DUtils.h"
+#include "CommonStates.h"
 
 class SGameUpdateEvent;
 
@@ -37,6 +38,14 @@ namespace Rendering::Renderers
             Count
         };
 
+        enum RootParameterIndex
+        {
+            ConstantBuffer,
+            TextureSRV,
+            TextureSampler,
+            RootParameterCount
+        };
+
     public:
         DirectXTKRenderer();
         ~DirectXTKRenderer();
@@ -55,7 +64,12 @@ namespace Rendering::Renderers
         void OnFrameUpdate(const SGameUpdateEvent& p_UpdateEvent);
         bool SetupRenderer(IDXGISwapChain3* p_SwapChain);
         void Draw();
+        void DepthDraw();
         void WaitForCurrentFrameToFinish() const;
+
+        bool CompileShaderFromString(const std::string& shaderCode, const std::string& entryPoint, const std::string& shaderModel, ID3DBlob** shaderBlob);
+        bool CreateFontDistanceFieldTexture();
+        bool CreateWhiteTexture();
 
     public:
         void DrawLine3D(const SVector3& p_From, const SVector3& p_To, const SVector4& p_FromColor, const SVector4& p_ToColor) override;
@@ -64,7 +78,15 @@ namespace Rendering::Renderers
         bool ScreenToWorld(const SVector2& p_ScreenPos, SVector3& p_WorldPosOut, SVector3& p_DirectionOut) override;
         void DrawBox3D(const SVector3& p_Min, const SVector3& p_Max, const SVector4& p_Color) override;
         void DrawOBB3D(const SVector3& p_Min, const SVector3& p_Max, const SMatrix& p_Transform, const SVector4& p_Color) override;
-		void DrawQuad3D(const SVector3& p_V1, const SVector4& p_Color1, const SVector3& p_V2, const SVector4& p_Color2, const SVector3& p_V3, const SVector4& p_Color3, const SVector3& p_V4, const SVector4& p_Color4) override;
+        void DrawBoundingQuads(const SVector3& p_Min, const SVector3& p_Max, const SMatrix& p_Transform, const SVector4& p_Color) override;
+        void DrawTriangle3D(const SVector3& p_V1, const SVector4& p_Color1, const SVector3& p_V2, const SVector4& p_Color2, const SVector3& p_V3, const SVector4& p_Color3) override;
+        void DrawTriangle3D(const SVector3& p_V1, const SVector4& p_Color1, const SVector2& p_TextureCoordinates1, const SVector3& p_V2, const SVector4& p_Color2, const SVector2& p_TextureCoordinates2, const SVector3& p_V3, const SVector4& p_Color3, const SVector2& p_TextureCoordinates3) override;
+        void DrawQuad3D(const SVector3& p_V1, const SVector4& p_Color1, const SVector3& p_V2, const SVector4& p_Color2, const SVector3& p_V3, const SVector4& p_Color3, const SVector3& p_V4, const SVector4& p_Color4) override;
+        void DrawText3D(const std::string& text, const SMatrix& world, const SVector4& color, float scale = 1.f, TextAlignment horizontalAlignment = TextAlignment::Left, TextAlignment verticalAlignment = TextAlignment::Top);
+        void DrawText3D(const char* text, const SMatrix& world, const SVector4& color, float scale = 1.f, TextAlignment horizontalAlignment = TextAlignment::Left, TextAlignment verticalAlignment = TextAlignment::Top);
+        void DrawMesh(const std::vector<SVector3>& vertices, const std::vector<unsigned short>& indices, const SVector4& vertexColor) override;
+
+        const PrimitiveType GetCurrentPrimitiveType() const override;
 
     private:
         bool m_RendererSetup = false;
@@ -94,18 +116,29 @@ namespace Rendering::Renderers
         float m_WindowWidth = 1;
         float m_WindowHeight = 1;
 
-        std::unique_ptr<DirectX::GraphicsMemory> m_GraphicsMemory {};
-        std::unique_ptr<DirectX::BasicEffect> m_LineEffect {};
-        std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> m_PrimitiveBatch {};
+        std::unique_ptr<DirectX::GraphicsMemory> m_GraphicsMemory{};
+        std::unique_ptr<DirectX::BasicEffect> m_TriangleEffect{};
+        std::unique_ptr<DirectX::BasicEffect> m_LineEffect{};
+        std::unique_ptr<DirectX::BasicEffect> m_TextEffect{};
+        std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> m_PrimitiveBatch{};
+        std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColorTexture>> m_TextBatch{};
 
-        DirectX::SimpleMath::Matrix m_World {};
-        DirectX::SimpleMath::Matrix m_View {};
-        DirectX::SimpleMath::Matrix m_Projection {};
-        DirectX::SimpleMath::Matrix m_ViewProjection {};
-        DirectX::SimpleMath::Matrix m_ProjectionViewInverse {};
+        DirectX::SimpleMath::Matrix m_World{};
+        DirectX::SimpleMath::Matrix m_View{};
+        DirectX::SimpleMath::Matrix m_Projection{};
+        DirectX::SimpleMath::Matrix m_ViewProjection{};
+        DirectX::SimpleMath::Matrix m_ProjectionViewInverse{};
 
-        std::unique_ptr<DirectX::DescriptorHeap> m_ResourceDescriptors {};
-        std::unique_ptr<DirectX::SpriteFont> m_Font {};
-        std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch {};
+        std::unique_ptr<DirectX::DescriptorHeap> m_ResourceDescriptors{};
+        std::unique_ptr<DirectX::SpriteFont> m_Font{};
+        std::unique_ptr<DirectX::SpriteBatch> m_SpriteBatch{};
+
+        PrimitiveType m_CurrentPrimitiveType;
+        ScopedD3DRef<ID3D12Resource> m_FontDistanceFieldTexture;
+        ScopedD3DRef<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+        //std::unique_ptr<DirectX::DescriptorHeap> m_SrvDescriptorHeap;
+        ScopedD3DRef<ID3D12PipelineState> pipelineState;
+        std::unique_ptr<DirectX::CommonStates> commonStates;
+        ScopedD3DRef<ID3D12Resource> m_WhiteTexture;
     };
 }

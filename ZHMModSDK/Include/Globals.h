@@ -31,6 +31,15 @@ class ZInputActionManager;
 class ZSelectionForFreeCameraEditorStyleEntity;
 template <typename T> class TArray;
 template <typename T> class TEntityRef;
+struct SReasoningGrid;
+class ZGridManager;
+class ZHM5GridManager;
+class ZPathfinder;
+
+namespace bfx
+{
+    class SystemInstance;
+}
 
 class ZHMSDK_API Globals {
 public:
@@ -56,6 +65,10 @@ public:
     static ZContentKitManager* ContentKitManager;
     static ZHM5ActionManager* HM5ActionManager;
     static ZBehaviorService* BehaviorService;
+    static ZGridManager** GridManager;
+    static ZHM5GridManager* HM5GridManager;
+    static ZPathfinder* Pathfinder;
+    static bfx::SystemInstance* NavPowerSystemInstance;
     static SPrimitiveBufferData* PrimitiveBufferData;
     static IGameMode** GameMode;
     static IEngineMode** EngineMode;
@@ -64,4 +77,5 @@ public:
     static int* InputActionManager_BindMem;
     static int* InputActionManager_Seq;
     static TArray<TEntityRef<ZSelectionForFreeCameraEditorStyleEntity>>* Selections;
+    static SReasoningGrid** ActiveGrid;
 };
