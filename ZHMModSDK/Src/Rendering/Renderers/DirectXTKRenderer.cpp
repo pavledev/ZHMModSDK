@@ -238,16 +238,16 @@ void DirectXTKRenderer::OnPresent(IDXGISwapChain3* p_SwapChain) {
     Logger::Debug("DSV descriptor handle: {:X}", s_DsvDescriptor.ptr);*/
 
     //m_CommandList->OMSetRenderTargets(1, &s_RtvDescriptor, false, &s_DsvDescriptor);
-    //m_CommandList->OMSetRenderTargets(1, &s_RtvDescriptor, false, nullptr);
+    m_CommandList->OMSetRenderTargets(1, &s_RtvDescriptor, false, nullptr);
 
-    TEntityRef<ZHitman5> s_LocalHitman = SDK()->GetLocalPlayer();
+    //TEntityRef<ZHitman5> s_LocalHitman = SDK()->GetLocalPlayer();
 
-    if (s_LocalHitman)
-    {
-        DepthDraw();
-    }
+    //if (s_LocalHitman)
+    //{
+    //    DepthDraw();
+    //}
 
-    Draw();
+    //Draw();
 
     const D3D12_RESOURCE_BARRIER s_PresentBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         m_BackBuffers[s_BackBufferIndex],
@@ -1016,6 +1016,42 @@ void DirectXTKRenderer::DrawOBB3D(
     DrawLine3D(XMVecToSVec3(s_Corners[3]), XMVecToSVec3(s_Corners[7]), p_Color, p_Color);
 }
 
+void DirectXTKRenderer::DrawBoundingQuads(const SVector3& p_Min, const SVector3& p_Max, const SMatrix& p_Transform, const SVector4& p_Color) {
+    // Transform matrix for the bounding box
+    const auto s_Transform = *reinterpret_cast<DirectX::FXMMATRIX*>(&p_Transform);
+
+    // Define the 8 corners of the bounding box in local space, similar to DrawOBB3D
+    DirectX::XMVECTOR s_Corners[] = {
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Min.y, p_Min.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Max.y, p_Min.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Max.y, p_Min.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Min.y, p_Min.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Max.y, p_Max.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Max.y, p_Max.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Min.x, p_Min.y, p_Max.z), s_Transform),
+        DirectX::XMVector3Transform(DirectX::SimpleMath::Vector3(p_Max.x, p_Min.y, p_Max.z), s_Transform),
+    };
+
+    // Lambda to draw a quad as two triangles using SVector3
+    auto drawQuad = [&](int i0, int i1, int i2, int i3) {
+        SVector3 v0(s_Corners[i0].m128_f32[0], s_Corners[i0].m128_f32[1], s_Corners[i0].m128_f32[2]);
+        SVector3 v1(s_Corners[i1].m128_f32[0], s_Corners[i1].m128_f32[1], s_Corners[i1].m128_f32[2]);
+        SVector3 v2(s_Corners[i2].m128_f32[0], s_Corners[i2].m128_f32[1], s_Corners[i2].m128_f32[2]);
+        SVector3 v3(s_Corners[i3].m128_f32[0], s_Corners[i3].m128_f32[1], s_Corners[i3].m128_f32[2]);
+
+        DrawTriangle3D(v0, p_Color, v1, p_Color, v2, p_Color);
+        DrawTriangle3D(v0, p_Color, v2, p_Color, v3, p_Color);
+        };
+
+    // Draw each face of the bounding box as quads
+    drawQuad(0, 1, 2, 3);// Front face
+    drawQuad(4, 5, 6, 7);// Back face
+    drawQuad(0, 1, 5, 6);// Left face
+    drawQuad(2, 3, 7, 4);// Right face
+    drawQuad(1, 2, 4, 5);// Top face
+    drawQuad(0, 3, 7, 6);// Bottom face
+}
+
 void Rendering::Renderers::DirectXTKRenderer::DrawTriangle3D(const SVector3& p_V1, const SVector4& p_Color1, const SVector3& p_V2, const SVector4& p_Color2, const SVector3& p_V3, const SVector4& p_Color3) {
     m_PrimitiveBatch->DrawTriangle(
         DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(p_V1.x, p_V1.y, p_V1.z), DirectX::SimpleMath::Vector4(p_Color1.x, p_Color1.y, p_Color1.z, p_Color1.w)),
@@ -1202,7 +1238,21 @@ void DirectXTKRenderer::DrawText3D(const char* text, const SMatrix& world, const
     }
 }
 
-const PrimitiveType Rendering::Renderers::DirectXTKRenderer::GetCurrentPrimitiveType() const
-{
+void DirectXTKRenderer::DrawMesh(const std::vector<SVector3>& vertices, const std::vector<unsigned short>& indices, const SVector4& vertexColor) {
+    std::vector<DirectX::VertexPositionColor> vertices2;
+
+    vertices2.reserve(vertices.size());
+
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        const SVector3& vertex = vertices[i];
+
+        vertices2.push_back(DirectX::VertexPositionColor(DirectX::SimpleMath::Vector3(vertex.x, vertex.y, vertex.z),
+            DirectX::SimpleMath::Vector4(vertexColor.x, vertexColor.y, vertexColor.z, vertexColor.w)));
+    }
+
+    m_PrimitiveBatch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, indices.data(), indices.size(), vertices2.data(), vertices2.size());
+}
+
+const PrimitiveType Rendering::Renderers::DirectXTKRenderer::GetCurrentPrimitiveType() const {
     return m_CurrentPrimitiveType;
 }
