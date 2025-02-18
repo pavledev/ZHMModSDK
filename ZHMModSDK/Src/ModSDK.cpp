@@ -734,6 +734,15 @@ void ModSDK::OnDraw3D() {
     m_EntityMutex.unlock_shared();*/
 }
 
+void ModSDK::OnDepthDraw3D() {
+    m_ModLoader->LockRead();
+
+    for (auto& s_Mod : m_ModLoader->GetLoadedMods())
+        s_Mod->OnDepthDraw3D(m_DirectXTKRenderer.get());
+
+    m_ModLoader->UnlockRead();
+}
+
 void ModSDK::OnModLoaded(const std::string& p_Name, IPluginInterface* p_Mod, bool p_LiveLoad) {
     p_Mod->SetupUI();
     p_Mod->Init();
