@@ -41,6 +41,6 @@ public:
     ZConfigDatabase m_ConfigDatabase; // 0x60
     TArray<TEntityRef<IItem>> m_aNonOwnedItems; // 0xC0
     ZAABBTreeNode* m_pSpatialRegistry; // 0xD8
-    TNonReallocatingArray<ZRegisteredEntityData, 1500> m_aRegisteredEntities; // 0xE0
+    TNonReallocatingArray<ZRegisteredEntityData, 2000> m_aRegisteredEntities; // 0xE0
     bool m_bHasRequests; // 0x100
 };
