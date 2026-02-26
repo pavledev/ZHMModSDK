@@ -215,6 +215,7 @@ class ZPathfinderConfiguration : public ZEntityImpl {
 public:
     TResourcePtr<ZBuffer> m_NavpowerResourceID; // 0x18
     TEntityRef<ZSpatialEntity> m_rPivot; // 0x20
+    bool m_bAllowMultipleInclusionVolumes; // 0x30
 };
 
 struct SNavPowerResource {
