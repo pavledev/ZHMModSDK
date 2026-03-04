@@ -143,9 +143,13 @@ struct slConstants {
     bool motionVectorsJittered;
 };
 
-class ZRenderDevice {
+class ZRenderDeviceBase {
+    virtual ~ZRenderDeviceBase() = 0;
+};
+
+class ZRenderDevice : public ZRenderDeviceBase {
 public:
-    virtual ~ZRenderDevice() = default;
+    virtual ~ZRenderDevice() = 0;
 
 public:
     PAD(0x400); // 0x08
@@ -195,7 +199,7 @@ public:
     uint16 m_aOverlappingRooms[32]; // 0x5EC
 };
 
-class ZRenderManager {
+class ZRenderManager : public IComponentInterface {
 public:
     virtual ~ZRenderManager() = default;
 
