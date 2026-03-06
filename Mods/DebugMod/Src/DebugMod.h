@@ -46,6 +46,8 @@ private:
     void GenerateVerticesForQuadBorderLines();
     void GenerateVerticesForNeighborConnectionLines();
 
+    void BuildNavMeshRenderData();
+
     std::map<NavPower::Binary::Area*, uint32_t> GetAreaPointerToIndexMap();
 
     // Functions are adapted from OBJ Loader plugin: https://github.com/Bly7/OBJ-Loader/blob/master/Source/OBJ_Loader.h
@@ -94,6 +96,7 @@ private:
     bool m_DrawGizmos = false;
     NavPower::NavMesh m_NavMesh;
     std::vector<uint8_t> m_NavpData;
+    std::vector<NavPower::Area*> m_Areas;
     std::vector<std::vector<SVector3>> m_Vertices;
     std::vector<std::vector<unsigned short>> m_Indices;
     std::vector<Line> m_NavMeshLines;

@@ -96,63 +96,8 @@ void DebugMod::DrawOptions(const bool p_HasFocus) {
 
         if (ImGui::CollapsingHeader("Guide Path Finder", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::Checkbox("Draw Nav Mesh", &m_DrawNavMesh)) {
-                if (m_NavMesh.m_areas.size() == 0) {
-                    static const SVector4 s_LineColor = SVector4(0.f, 1.f, 0.f, 1.f);
-                    static const SVector4 s_AdjacentLineColor = SVector4(1.f, 1.f, 1.f, 1.f);
-
-                    const uintptr_t s_NavpData = reinterpret_cast<uintptr_t>(Globals::Pathfinder->m_NavPowerResources[0]
-                        .m_pNavpowerResource);
-                    const uint32_t s_NavpDataSize = Globals::Pathfinder->m_NavPowerResources[0].m_nNavpowerResourceSize;
-
-                    m_NavpData.resize(s_NavpDataSize);
-
-                    std::memcpy(m_NavpData.data(), reinterpret_cast<void*>(s_NavpData), s_NavpDataSize);
-
-                    m_NavMesh.read(reinterpret_cast<uintptr_t>(m_NavpData.data()), s_NavpDataSize);
-
-                    m_Vertices.resize(m_NavMesh.m_areas.size());
-                    m_Indices.resize(m_NavMesh.m_areas.size());
-                    m_NavMeshLines.reserve(m_NavMesh.m_areas.size() * 3);
-                    m_NavMeshConnectivityLines.reserve(m_NavMesh.m_areas.size() * 3);
-
-                    std::map<NavPower::Binary::Area*, uint32_t> s_AreaPointerToIndexMap = GetAreaPointerToIndexMap();
-
-                    for (size_t i = 0; i < m_NavMesh.m_areas.size(); ++i) {
-                        const size_t s_VertexCount = m_NavMesh.m_areas[i].m_edges.size();
-
-                        m_Vertices[i].reserve(s_VertexCount);
-
-                        const SVector3 s_Centroid = m_NavMesh.m_areas[i].CalculateCentroid();
-
-                        for (size_t j = 0; j < s_VertexCount; ++j) {
-                            m_Vertices[i].push_back(m_NavMesh.m_areas[i].m_edges[j]->m_pos);
-
-                            const size_t s_NextIndex = (j + 1) % s_VertexCount;
-                            Line& s_Line = m_NavMeshLines.emplace_back();
-
-                            s_Line.start = m_NavMesh.m_areas[i].m_edges[j]->m_pos;
-                            s_Line.startColor = s_LineColor;
-
-                            s_Line.end = m_NavMesh.m_areas[i].m_edges[s_NextIndex]->m_pos;
-                            s_Line.endColor = s_LineColor;
-
-                            NavPower::Binary::Area* s_AdjArea = m_NavMesh.m_areas[i].m_edges[j]->m_pAdjArea;
-
-                            if (s_AdjArea) {
-                                const uint32_t s_AdjacentAreaIndex = s_AreaPointerToIndexMap[s_AdjArea];
-                                NavPower::Area& s_AdjacentArea = m_NavMesh.m_areas[s_AdjacentAreaIndex - 1];
-                                const SVector3 s_AdjacentCentroid = s_AdjacentArea.CalculateCentroid();
-
-                                Line& s_ConnLine = m_NavMeshConnectivityLines.emplace_back();
-                                s_ConnLine.start = s_Centroid;
-                                s_ConnLine.startColor = s_AdjacentLineColor;
-                                s_ConnLine.end = s_AdjacentCentroid;
-                                s_ConnLine.endColor = s_AdjacentLineColor;
-                            }
-                        }
-
-                        VertexTriangluation(m_Vertices[i], m_Indices[i]);
-                    }
+                if (m_Areas.size() == 0) {
+                    BuildNavMeshRenderData();
                 }
             }
 
@@ -505,8 +450,8 @@ void DebugMod::DrawNavMesh(IRenderer* p_Renderer) {
     static const SVector4 s_YellowTriangleColor = SVector4(1.f, 1.f, 0.f, 0.49804f);
 
     if (m_DrawPlannerAreasSolid) {
-        for (size_t i = 0; i < m_NavMesh.m_areas.size(); ++i) {
-            if (m_ColorizeAreaUsageFlags && m_NavMesh.m_areas[i].m_area->m_usageFlags ==
+        for (size_t i = 0; i < m_Areas.size(); ++i) {
+            if (m_ColorizeAreaUsageFlags && m_Areas[i]->m_area->m_usageFlags ==
                 NavPower::AreaUsageFlags::AREA_STEPS) {
                 p_Renderer->DrawMesh(m_Vertices[i], m_Indices[i], s_YellowTriangleColor);
             }
@@ -545,8 +490,8 @@ void DebugMod::DrawNavMesh(IRenderer* p_Renderer) {
         static const SVector4 s_Color = SVector4(1.f, 1.f, 1.f, 1.f);
         static const float s_Scale = 0.2f;
 
-        for (size_t i = 0; i < m_NavMesh.m_areas.size(); ++i) {
-            SVector3 s_WorldPosition = m_NavMesh.m_areas[i].m_area->m_pos;
+        for (size_t i = 0; i < m_Areas.size(); ++i) {
+            SVector3 s_WorldPosition = m_Areas[i]->m_area->m_pos;
 
             const DirectX::XMVECTOR s_WorldPosition2 = DirectX::XMVectorSet(
                 s_WorldPosition.x, s_WorldPosition.y, s_WorldPosition.z, 1.0f
@@ -557,10 +502,10 @@ void DebugMod::DrawNavMesh(IRenderer* p_Renderer) {
 
             std::string s_Text;
 
-            if (!m_NavMesh.m_areas[i].m_area->m_flags.IsImpassable() || m_NavMesh.m_areas[i].m_area->m_flags.
+            if (!m_Areas[i]->m_area->m_flags.IsImpassable() || m_Areas[i]->m_area->m_flags.
                 ApplyObCostWhenFlagsDontMatch()) {
-                const uint32_t obCostMult = m_NavMesh.m_areas[i].m_area->m_flags.GetObCostMult();
-                const uint32_t staticCostMult = m_NavMesh.m_areas[i].m_area->m_flags.GetStaticCostMult();
+                const uint32_t obCostMult = m_Areas[i]->m_area->m_flags.GetObCostMult();
+                const uint32_t staticCostMult = m_Areas[i]->m_area->m_flags.GetStaticCostMult();
                 const uint32_t costMult = obCostMult > staticCostMult ? obCostMult : staticCostMult;
 
                 s_Text = std::to_string(costMult);
@@ -886,12 +831,79 @@ void DebugMod::GenerateVerticesForNeighborConnectionLines() {
     }
 }
 
+void DebugMod::BuildNavMeshRenderData() {
+    static const SVector4 s_LineColor = SVector4(0.f, 1.f, 0.f, 1.f);
+    static const SVector4 s_AdjacentLineColor = SVector4(1.f, 1.f, 1.f, 1.f);
+
+    const uintptr_t s_NavpData = reinterpret_cast<uintptr_t>(Globals::Pathfinder->m_NavPowerResources[0]
+        .m_pNavpowerResource);
+    const uint32_t s_NavpDataSize = Globals::Pathfinder->m_NavPowerResources[0].m_nNavpowerResourceSize;
+
+    m_NavpData.resize(s_NavpDataSize);
+
+    std::memcpy(m_NavpData.data(), reinterpret_cast<void*>(s_NavpData), s_NavpDataSize);
+
+    m_NavMesh.read(reinterpret_cast<uintptr_t>(m_NavpData.data()), s_NavpDataSize);
+
+    for (auto& section : m_NavMesh.m_aSections) {
+        for (auto& graph : section.m_aNavGraphs) {
+            for (auto& area : graph.m_areas) {
+                m_Areas.push_back(&area);
+            }
+        }
+    }
+
+    m_Vertices.resize(m_Areas.size());
+    m_Indices.resize(m_Areas.size());
+    m_NavMeshLines.reserve(m_Areas.size() * 3);
+    m_NavMeshConnectivityLines.reserve(m_Areas.size() * 3);
+    
+    std::map<NavPower::Binary::Area*, uint32_t> s_AreaPointerToIndexMap = GetAreaPointerToIndexMap();
+
+    for (size_t i = 0; i < m_Areas.size(); ++i) {
+        const size_t s_VertexCount = m_Areas[i]->m_edges.size();
+
+        m_Vertices[i].reserve(s_VertexCount);
+
+        const SVector3 s_Centroid = m_Areas[i]->CalculateCentroid();
+
+        for (size_t j = 0; j < s_VertexCount; ++j) {
+            m_Vertices[i].push_back(m_Areas[i]->m_edges[j]->m_pos);
+
+            const size_t s_NextIndex = (j + 1) % s_VertexCount;
+            Line& s_Line = m_NavMeshLines.emplace_back();
+
+            s_Line.start = m_Areas[i]->m_edges[j]->m_pos;
+            s_Line.startColor = s_LineColor;
+
+            s_Line.end = m_Areas[i]->m_edges[s_NextIndex]->m_pos;
+            s_Line.endColor = s_LineColor;
+
+            NavPower::Binary::Area* s_AdjArea = m_Areas[i]->m_edges[j]->m_pAdjArea;
+
+            if (s_AdjArea) {
+                const uint32_t s_AdjacentAreaIndex = s_AreaPointerToIndexMap[s_AdjArea];
+                NavPower::Area& s_AdjacentArea = *m_Areas[s_AdjacentAreaIndex - 1];
+                const SVector3 s_AdjacentCentroid = s_AdjacentArea.CalculateCentroid();
+
+                Line& s_ConnLine = m_NavMeshConnectivityLines.emplace_back();
+                s_ConnLine.start = s_Centroid;
+                s_ConnLine.startColor = s_AdjacentLineColor;
+                s_ConnLine.end = s_AdjacentCentroid;
+                s_ConnLine.endColor = s_AdjacentLineColor;
+            }
+        }
+
+        VertexTriangluation(m_Vertices[i], m_Indices[i]);
+    }
+}
+
 std::map<NavPower::Binary::Area*, uint32_t> DebugMod::GetAreaPointerToIndexMap() {
     std::map<NavPower::Binary::Area*, uint32_t> s_AreaPointerToIndexMap;
     uint32_t s_AreaIndex = 1;
 
-    for (NavPower::Area area : m_NavMesh.m_areas) {
-        s_AreaPointerToIndexMap.emplace(area.m_area, s_AreaIndex);
+    for (NavPower::Area* area : m_Areas) {
+        s_AreaPointerToIndexMap.emplace(area->m_area, s_AreaIndex);
 
         s_AreaIndex++;
     }
