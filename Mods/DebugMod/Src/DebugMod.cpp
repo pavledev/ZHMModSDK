@@ -1343,6 +1343,7 @@ DEFINE_PLUGIN_DETOUR(DebugMod, void, OnClearScene, ZEntitySceneContext* th, bool
     m_DrawObstacles = false;
     m_NavMesh = {};
     m_NavpData.clear();
+    m_Areas.clear();
     m_Vertices.clear();
     m_Indices.clear();
     m_NavMeshLines.clear();
