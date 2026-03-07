@@ -13,11 +13,10 @@ bool Editor::SMatrix43Property(
         if (ImGuiCopyWidget(("##QNE JSON_" + p_Id).c_str())) {
             CopyToClipboard(
                 fmt::format(
-                    "{{\"rotation\":{{\"x\":{},\"y\":{},\"z\":{}}},\"position\":{{\"x\":{},\"y\":{},\"z\":{}}},"
-                    "\"scale\":{{\"x\":{},\"y\":{},\"z\":{}}}}}",
+                    "{{\"rotation\":{{\"x\":{},\"y\":{},\"z\":{}}},"
+                    "\"position\":{{\"x\":{},\"y\":{},\"z\":{}}}}}",
                     s_QneTransform.Rotation.x, s_QneTransform.Rotation.y, s_QneTransform.Rotation.z,
-                    s_QneTransform.Position.x, s_QneTransform.Position.y, s_QneTransform.Position.z,
-                    s_QneTransform.Scale.x, s_QneTransform.Scale.y, s_QneTransform.Scale.z
+                    s_QneTransform.Position.x, s_QneTransform.Position.y, s_QneTransform.Position.z
                 )
             );
         }
