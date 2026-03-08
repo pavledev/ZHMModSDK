@@ -36,10 +36,10 @@ public:
 
 template <typename T>
 struct SHashSetInfo {
-    bool m_bFixed;
-    uint32_t m_nBuckets;
-    uint32_t* m_pBuckets;
-    THashSetNode<T>* m_pNodes;
+    bool m_bFixed = false;
+    uint32_t m_nBuckets = 0;
+    uint32_t* m_pBuckets = nullptr;
+    THashSetNode<T>* m_pNodes = nullptr;
 };
 
 template <class T>
@@ -239,8 +239,8 @@ private:
     }
 
 public:
-    uint32_t m_nSize;
-    uint32_t m_iFree;
+    uint32_t m_nSize = 0;
+    uint32_t m_iFree = UINT32_MAX;
     SHashSetInfo<T> m_info;
 };
 
