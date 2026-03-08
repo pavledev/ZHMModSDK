@@ -84,7 +84,8 @@ namespace Util {
                 ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_ChildWindow
+                ImGuiWindowFlags_ChildWindow |
+                ImGuiWindowFlags_HorizontalScrollbar
             );
 
             if (s_IsOpen) {
