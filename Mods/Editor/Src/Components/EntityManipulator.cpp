@@ -20,11 +20,15 @@ void Editor::DrawEntityAABB(IRenderer* p_Renderer) {
 
             s_SpatialEntity->CalculateBounds(s_Min, s_Max, 1, 0);
 
+            p_Renderer->SetFrustumCullingEnabled(false);
+
             p_Renderer->DrawOBB3D(s_Min, s_Max, s_Transform, SVector4(0.f, 1.f, 1.f, 1.f));
 
             if (m_EntityHighlightMode == EntityHighlightMode::LinesAndTriangles) {
                 p_Renderer->DrawBoundingQuads3D(s_Min, s_Max, s_Transform, SVector4(0.f, 1.f, 1.f, 0.1f));
             }
+
+            p_Renderer->SetFrustumCullingEnabled(true);
         }
     }
 }
