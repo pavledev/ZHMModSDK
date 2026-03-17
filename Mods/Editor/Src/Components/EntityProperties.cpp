@@ -320,7 +320,7 @@ void Editor::DrawEntityProperties() {
 
             ImGui::Separator();
 
-            if (ImGui::BeginTable("DebugMod_HitmanPosition", 4)) {
+            if (ImGui::BeginTable("EntityTransform", 4)) {
                 for (int i = 0; i < 4; ++i) {
                     ImGui::TableNextRow();
 
